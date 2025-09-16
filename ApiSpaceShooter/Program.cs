@@ -7,13 +7,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services
     .AddDatabase(builder.Configuration)
     .AddApplicationServices()
-    .AddCorsConfiguration()
+    .AddCorsConfiguration(builder.Configuration) // Pasar configuration
     .AddApiDocumentation()
     .AddErrorHandling();
 
 var app = builder.Build();
 
-// Configurar pipeline
+// Configurar pipeline (orden correcto de middlewares)
 app.ConfigurePipeline();
 
 // Mapear endpoints
@@ -25,5 +25,6 @@ await app.InitializeDatabaseAsync();
 // Log de inicio
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Space Shooter API iniciada correctamente en {Environment}", app.Environment.EnvironmentName);
+logger.LogInformation("CORS configurado para desarrollo con política permisiva");
 
 app.Run();
