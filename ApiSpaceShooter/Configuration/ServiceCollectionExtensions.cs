@@ -11,13 +11,13 @@ public static class ServiceCollectionExtensions
     {
         var connectionString = configuration.GetConnectionString("SqlServer")
             ?? Environment.GetEnvironmentVariable("SQLSERVER_CONN")
-            ?? "Server=DESKTOP-OK96HBJ\\SLQSERVER;Database=ApiPruebaIa;User Id=sa;Password=ofima;TrustServerCertificate=True;";
+            ?? "Server=DESKTOP-OK96HBJ\\SLQSERVER;Database=VideJuegoApi;User Id=sa;Password=ofima;TrustServerCertificate=True;";
 
         services.AddDbContext<AppDbContext>(options =>
         {
             options.UseSqlServer(connectionString);
             options.EnableSensitiveDataLogging(false);
-            options.EnableDetailedErrors(false);
+            options.EnableDetailedErrors(true); // Habilitar para debug
         });
 
         return services;
@@ -37,37 +37,20 @@ public static class ServiceCollectionExtensions
     {
         services.AddCors(options =>
         {
-            // Política específica para desarrollo
+            // Política permisiva para desarrollo
             options.AddPolicy("DevelopmentPolicy", policy =>
             {
                 policy.WithOrigins(
-                    "http://localhost:4200",    // Angular default
-                    "https://localhost:4200",   // Angular HTTPS
-                    "http://localhost:3000",    // React default
-                    "https://localhost:3000",   // React HTTPS
-                    "http://127.0.0.1:4200",   // IP local Angular
-                    "http://127.0.0.1:3000"    // IP local React
+                    "http://localhost:4200",
+                    "https://localhost:4200",
+                    "http://127.0.0.1:4200"
                 )
                 .AllowAnyMethod()
                 .AllowAnyHeader()
-                .AllowCredentials()
-                .SetPreflightMaxAge(TimeSpan.FromMinutes(5));
+                .AllowCredentials();
             });
 
-            // Política específica para producción
-            options.AddPolicy("ProductionPolicy", policy =>
-            {
-                var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins")
-                    .Get<string[]>() ?? ["https://yourdomain.com"];
-                
-                policy.WithOrigins(allowedOrigins)
-                    .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                    .WithHeaders("Content-Type", "Authorization", "X-Requested-With")
-                    .AllowCredentials()
-                    .SetPreflightMaxAge(TimeSpan.FromHours(1));
-            });
-
-            // Política por defecto más permisiva para desarrollo
+            // Política por defecto
             options.AddDefaultPolicy(policy =>
             {
                 policy.AllowAnyOrigin()
@@ -87,12 +70,8 @@ public static class ServiceCollectionExtensions
             c.SwaggerDoc("v1", new() { 
                 Title = "Space Shooter API", 
                 Version = "v1",
-                Description = "API para gestión de puntajes del juego Space Shooter - Clean Architecture"
+                Description = "API para gestión de puntajes del juego Space Shooter"
             });
-            
-            // Agregar configuración para CORS en Swagger
-            c.AddServer(new() { Url = "https://localhost:7000", Description = "Desarrollo HTTPS" });
-            c.AddServer(new() { Url = "http://localhost:5000", Description = "Desarrollo HTTP" });
         });
 
         return services;
