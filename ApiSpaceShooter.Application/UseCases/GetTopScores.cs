@@ -12,13 +12,17 @@ public class GetTopScores
         _scoreRepository = scoreRepository ?? throw new ArgumentNullException(nameof(scoreRepository));
     }
 
+    /// <summary>
+    /// Obtiene el top N de puntajes ordenados según especificación:
+    /// - Points DESC
+    /// - Ante empates: menor DurationSec primero
+    /// - Luego CreatedAt ASC
+    /// </summary>
     public async Task<IReadOnlyList<Score>> Handle(int limit = 10, CancellationToken cancellationToken = default)
     {
-        // Limitar el rango entre 1 y 100
-        if (limit < 1)
-            limit = 1;
-        else if (limit > 100)
-            limit = 100;
+        // Limitar el rango según especificación
+        if (limit < 1) limit = 1;
+        if (limit > 100) limit = 100;
 
         return await _scoreRepository.GetTopAsync(limit, cancellationToken);
     }

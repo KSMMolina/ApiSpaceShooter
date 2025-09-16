@@ -1,5 +1,6 @@
 using ApiSpaceShooter.Application.UseCases;
 using ApiSpaceShooter.Models.Requests;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ApiSpaceShooter.Endpoints;
 
@@ -10,27 +11,36 @@ public static class ScoreEndpoints
         var group = endpoints.MapGroup("/api/v1/scores")
             .WithTags("Scores");
 
+        // POST /api/v1/scores - Crear puntaje
         group.MapPost("/", CreateScoreAsync)
             .WithName("CreateScore")
             .WithSummary("Crear nuevo puntaje")
-            .WithDescription("Crea un nuevo puntaje para el juego Space Shooter");
+            .WithDescription("Crea un nuevo puntaje para el juego Space Shooter")
+            .Accepts<CreateScoreRequest>("application/json")
+            .Produces<object>(201)
+            .ProducesValidationProblem(400);
 
+        // GET /api/v1/scores/top?limit=10 - Top N puntajes
         group.MapGet("/top", GetTopScoresAsync)
             .WithName("GetTopScores")
             .WithSummary("Obtener top puntajes")
-            .WithDescription("Obtiene los mejores puntajes ordenados por puntos");
+            .WithDescription("Obtiene los mejores puntajes ordenados por puntos (DESC), duración (ASC), fecha (ASC)")
+            .Produces<IReadOnlyList<ApiSpaceShooter.Domain.Entities.Score>>(200);
 
+        // GET /api/v1/scores/alias/{alias} - Historial por alias
         group.MapGet("/alias/{alias}", GetScoresByAliasAsync)
             .WithName("GetScoresByAlias")
-            .WithSummary("Obtener puntajes por alias")
-            .WithDescription("Obtiene el historial de puntajes de un jugador específico");
+            .WithSummary("Obtener historial por alias")
+            .WithDescription("Obtiene el historial de puntajes de un jugador específico")
+            .Produces<IReadOnlyList<ApiSpaceShooter.Domain.Entities.Score>>(200)
+            .ProducesValidationProblem(400);
 
         return endpoints;
     }
 
     private static async Task<IResult> CreateScoreAsync(
-        CreateScoreRequest request,
-        CreateScore createScore,
+        CreateScoreRequest request, 
+        CreateScore createScore, 
         CancellationToken ct)
     {
         try
@@ -52,9 +62,9 @@ public static class ScoreEndpoints
     }
 
     private static async Task<IResult> GetTopScoresAsync(
-        int limit,
-        GetTopScores getTopScores,
-        CancellationToken ct)
+        [FromQuery] int limit = 10,
+        GetTopScores getTopScores = null!,
+        CancellationToken ct = default)
     {
         try
         {
