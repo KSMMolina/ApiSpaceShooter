@@ -24,7 +24,7 @@ public static class ScoreEndpoints
         group.MapGet("/top", GetTopScoresAsync)
             .WithName("GetTopScores")
             .WithSummary("Obtener top puntajes")
-            .WithDescription("Obtiene los mejores puntajes ordenados por puntos (DESC), duración (ASC), fecha (ASC)")
+            .WithDescription("Obtiene los mejores puntajes ordenados por puntos")
             .Produces<IReadOnlyList<ApiSpaceShooter.Domain.Entities.Score>>(200);
 
         // GET /api/v1/scores/alias/{alias} - Historial por alias
@@ -59,6 +59,10 @@ public static class ScoreEndpoints
         {
             return Results.BadRequest(new { error = ex.Message, type = "validation_error" });
         }
+        catch (Exception ex)
+        {
+            return Results.Problem($"Error interno: {ex.Message}");
+        }
     }
 
     private static async Task<IResult> GetTopScoresAsync(
@@ -78,13 +82,24 @@ public static class ScoreEndpoints
     }
 
     private static async Task<IResult> GetScoresByAliasAsync(
-        string alias,
+        [FromRoute] string alias,
         GetScoresByAlias getScoresByAlias,
         CancellationToken ct)
     {
         try
         {
+            // Validación adicional del alias
+            if (string.IsNullOrWhiteSpace(alias))
+            {
+                return Results.BadRequest(new { error = "El alias no puede estar vacío", type = "validation_error" });
+            }
+
+            // Decodificar URL si es necesario
+            alias = Uri.UnescapeDataString(alias);
+
             var scores = await getScoresByAlias.Handle(alias, ct);
+            
+            // Si no hay scores, devolver array vacío en lugar de error
             return Results.Ok(scores);
         }
         catch (ArgumentException ex)

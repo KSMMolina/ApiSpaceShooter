@@ -7,39 +7,29 @@ public static class WebApplicationExtensions
 {
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
-        
-        // 1. Swagger primero (solo en Development)
+        // Configuración para desarrollo
         if (app.Environment.IsDevelopment())
         {
+            app.UseDeveloperExceptionPage();
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Space Shooter API v1");
-                c.RoutePrefix = string.Empty; // Swagger en la raíz
+                c.RoutePrefix = string.Empty;
             });
         }
 
-        // 2. CORS debe ir ANTES de UseRouting y cualquier middleware de autenticación
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseCors("DevelopmentPolicy");
-        }
-        else
-        {
-            app.UseCors("ProductionPolicy");
-        }
+        app.UseCors(); // Usar política por defecto
 
-        // 3. Routing
-        app.UseRouting();
+        app.UseRouting(); // Después de CORS
 
-        // 4. HTTPS Redirection (después de CORS)
+        app.UseExceptionHandler(); // Manejo de errores
+
+        // Solo HTTPS en producción
         if (!app.Environment.IsDevelopment())
         {
             app.UseHttpsRedirection();
         }
-
-        // 5. Exception Handler
-        app.UseExceptionHandler();
 
         return app;
     }
@@ -53,8 +43,9 @@ public static class WebApplicationExtensions
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             
-            await context.Database.MigrateAsync();
-            logger.LogInformation("Base de datos migrada exitosamente");
+            // Crear base de datos si no existe
+            await context.Database.EnsureCreatedAsync();
+            logger.LogInformation("Base de datos verificada exitosamente");
 
             if (app.Environment.IsDevelopment())
             {
@@ -75,7 +66,7 @@ public static class WebApplicationExtensions
     {
         if (await context.Scores.AnyAsync())
         {
-            logger.LogInformation("La base de datos ya contiene datos de prueba");
+            logger.LogInformation("La base de datos ya contiene datos");
             return;
         }
 
@@ -101,17 +92,18 @@ public static class WebApplicationExtensions
             },
             new ApiSpaceShooter.Domain.Entities.Score
             {
-                Alias = "shooter3",
-                Points = 1200,
-                MaxCombo = 18,
-                DurationSec = 200,
-                CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+                Alias = "player1",
+                Points = 1800,
+                MaxCombo = 30,
+                DurationSec = 160,
+                Metadata = "Segunda partida",
+                CreatedAt = DateTime.UtcNow.AddMinutes(-10)
             }
         };
 
         context.Scores.AddRange(testScores);
         await context.SaveChangesAsync();
         
-        logger.LogInformation("Datos de prueba sembrados exitosamente");
+        logger.LogInformation("Datos de prueba insertados: {Count} registros", testScores.Length);
     }
 }
