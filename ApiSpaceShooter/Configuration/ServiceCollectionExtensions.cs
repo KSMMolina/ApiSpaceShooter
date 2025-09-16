@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
         services.AddDbContext<AppDbContext>(options =>
         {
             options.UseSqlServer(connectionString);
+            // Configuraciones específicas para el reto
             options.EnableSensitiveDataLogging(false);
             options.EnableDetailedErrors(false);
         });
@@ -25,13 +26,10 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        // Repository Pattern
+        // Repository exacto para el reto
         services.AddScoped<IScoreRepository, ScoreRepository>();
         
-        // Unit of Work Pattern
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
-        
-        // Use Cases
+        // Use Cases específicos del reto
         services.AddScoped<CreateScore>();
         services.AddScoped<GetTopScores>();
         services.AddScoped<GetScoresByAlias>();
@@ -41,6 +39,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddCorsConfiguration(this IServiceCollection services)
     {
+        // CORS específico para frontend (según especificación)
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(policy =>
@@ -62,7 +61,7 @@ public static class ServiceCollectionExtensions
             c.SwaggerDoc("v1", new() { 
                 Title = "Space Shooter API", 
                 Version = "v1",
-                Description = "API para gestión de puntajes del juego Space Shooter con arquitectura hexagonal"
+                Description = "API para gestión de puntajes del juego Space Shooter - Clean Architecture"
             });
         });
 
@@ -71,6 +70,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddErrorHandling(this IServiceCollection services)
     {
+        // ProblemDetails según especificación del reto
         services.AddProblemDetails();
         return services;
     }
