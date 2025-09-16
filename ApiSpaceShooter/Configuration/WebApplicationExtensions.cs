@@ -7,6 +7,8 @@ public static class WebApplicationExtensions
 {
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
+        
+        // 1. Swagger primero (solo en Development)
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -17,8 +19,26 @@ public static class WebApplicationExtensions
             });
         }
 
-        app.UseHttpsRedirection();
-        app.UseCors();
+        // 2. CORS debe ir ANTES de UseRouting y cualquier middleware de autenticación
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseCors("DevelopmentPolicy");
+        }
+        else
+        {
+            app.UseCors("ProductionPolicy");
+        }
+
+        // 3. Routing
+        app.UseRouting();
+
+        // 4. HTTPS Redirection (después de CORS)
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
+
+        // 5. Exception Handler
         app.UseExceptionHandler();
 
         return app;
